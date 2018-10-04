@@ -1,4 +1,4 @@
-# JS Elementary Tasks
+# Clock
 
 ## Download & Get started
 1. Open `Git Bash`.

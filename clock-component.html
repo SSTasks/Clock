@@ -1,0 +1,199 @@
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+<!--<script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>-->
+
+<template>
+    <style>
+        :host {
+            position: absolute;
+            top: 10%;
+            left: 7%;
+            display: inline-block;
+            background: black;
+            cursor: pointer;
+        }
+
+        .clock {
+            width:180px;
+            height:180px;
+            color:#05a7f0;
+            box-shadow: 1px 2px 10px 2px black;
+
+            background: url(img/clock.png) no-repeat left top scroll;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;
+        }
+
+        .clock p {
+            margin:0;
+            padding-top:72px;
+            text-align: center;
+            font-size:25px;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .calendar {
+            padding:0;
+            width:186px;
+            height:245px;
+            color:white;
+            box-shadow: 1px 2px 10px 1px black;
+
+            background: url(img/calendar.png) no-repeat left top scroll;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;
+        }
+
+        .calendar p {
+            margin:0;
+            padding:165px 0 0 10px;
+            text-align: left;
+            font-size:25px;
+            font-family: 'Open Sans', sans-serif;
+        }
+    </style>
+    <div class = 'clock'>
+        <p id = "display">Clock</p>
+    </div>
+
+</template>
+<script>
+    let ClockComponentProto = Object.create(HTMLElement.prototype);
+    ClockComponentProto.createdCallback = function() {
+        this.addEventListener('click', () => {
+            toggleView(); // switch between clock and calendar
+        });
+
+        this.addEventListener('contextmenu', event => event.preventDefault()); // disable the standard right click
+        this.addEventListener('contextmenu', () => {
+            toggleFormat(); // switch between formats
+        });
+
+        this.addEventListener('mouseover', () => {
+            changeColor();
+        });
+
+        let template = document.currentScript.ownerDocument.querySelector('template');
+        let root = this.createShadowRoot();
+
+
+        root.appendChild(document.importNode(template.content, true));
+        root.querySelector('p').textContent = getDisplay('full');
+    }
+
+    ClockComponentProto.attachedCallback = function () {
+        runDisplay('full');
+    };
+
+    let ClockComponent = document.registerElement('clock-component', {
+        prototype: ClockComponentProto
+    });
+
+    // add component to document
+    document.body.appendChild(new ClockComponent());
+
+
+    //function clock
+    function getDisplay(format) {
+        // parse current date
+        let display = '';
+        let date = new Date(),
+            year = date.getFullYear().toString(),
+            month = (date.getMonth()+1).toString(),
+            day = date.getDate().toString(),
+            hours = date.getHours().toString(),
+            minutes = date.getMinutes().toString(),
+            seconds = date.getSeconds().toString();
+
+        // format the date using ternary expression
+        month = month.length < 2 ? '0' + month : month;
+        day = day.length < 2 ? '0' + day : day;
+        hours = hours.hours < 2 ? '0' + hours : hours;
+        minutes = minutes.length < 2 ? '0' + minutes : minutes;
+        seconds = seconds.length < 2 ? '0' + seconds : seconds;
+
+        switch (format) {
+            case 'full':
+                display = `${hours}:${minutes}:${seconds}`;
+                break;
+            case 'short':
+                display = `${hours}:${minutes}`;
+                break;
+            case 'eu-date':
+                display = `${month}/${day}/${year.substr(year.length-2)}`;
+                break;
+            case 'ua-date':
+                display = `${day}.${month}.${year}`;
+                break;
+            default:
+                display = `loading...`;
+        }
+
+        return display;
+    }
+
+    // run setInterval for changing display value
+    var runInterval;
+    function runDisplay(state) {
+        clearInterval(runInterval);
+        runInterval = setInterval( () => {
+            document.querySelector('* /deep/ #display').innerHTML = getDisplay(state);
+        }, 1000);
+    }
+
+    // switch between clock and calendar
+    let view = 'clock';
+    function toggleView() {
+        if (view == 'clock') {
+            document.querySelector('* /deep/ #display').innerHTML = getDisplay('eu-date');
+            runDisplay('eu-date');
+
+            document.querySelector('* /deep/ .clock').className = 'calendar';
+            view  = 'calendar';
+        } else {
+            document.querySelector('* /deep/ #display').innerHTML = getDisplay('full');
+            runDisplay('full');
+
+            document.querySelector('* /deep/ .calendar').className = 'clock';
+            view  = 'clock';
+        }
+    }
+
+    let format = 'full';
+    function toggleFormat() {
+        if (format == 'full') {
+            console.log('clock')
+            if (view == 'clock') {
+                console.log('clock full')
+                document.querySelector('* /deep/ #display').innerHTML = getDisplay('short');
+                runDisplay('short');
+            } else {
+                console.log('clock short')
+                document.querySelector('* /deep/ #display').innerHTML = getDisplay('ua-date');
+                runDisplay('ua-date');
+            }
+
+            format = 'short';
+        } else {
+            if (view == 'clock') {
+                document.querySelector('* /deep/ #display').innerHTML = getDisplay('full');
+                runDisplay('full');
+            } else {
+                document.querySelector('* /deep/ #display').innerHTML = getDisplay('eu-date');
+                runDisplay('eu-date');
+            }
+
+            format = 'full';
+        }
+    }
+
+    // hover color change
+    function changeColor(){
+        let color = Math.random().toString().substr(-6);
+        document.querySelector('clock-component').style.backgroundColor = `#${color}`;
+    }
+
+</script>
